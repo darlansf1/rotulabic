@@ -5,11 +5,10 @@ function search($query)
 {
     // Replace this value with your account key
     $accountKey = BING_ACCOUNT_KEY;            
-    $ServiceRootURL =  'https://api.datamarket.azure.com/Data.ashx/Bing/Search/';                    
-    $WebSearchURL = $ServiceRootURL . 'v1/Composite?Sources=%27web%27&$format=json&Query=';
+    $ServiceRootURL =  'https://api.cognitive.microsoft.com/bing/v5.0/search';                    
+    $WebSearchURL = $ServiceRootURL . '?responseFilter=webpages&q=';
 	
-    $cred = sprintf('Authorization: Basic %s', 
-      base64_encode($accountKey . ":" . $accountKey) );
+    $cred = sprintf('Ocp-Apim-Subscription-Key: %s', $accountKey);
 
     $context = stream_context_create(array(
         'http' => array(
@@ -20,14 +19,13 @@ function search($query)
     $request = $WebSearchURL . urlencode( '\'' .$query. '\'');
 	
 	//$request = '%27Dilma%27&$format=JSON';
-
+	sleep(1);#requests are limited per time
     $response = file_get_contents($request, 0, $context);
 
     $jsonobj = json_decode($response);
-
 	if($jsonobj == null || !$jsonobj)
 		return 0;
-	return $jsonobj->d->results[0]->WebTotal;
+	return $jsonobj->webPages->totalEstimatedMatches;
 }
 
 function english_hits($phrase, $type){
