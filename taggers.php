@@ -6,7 +6,7 @@
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-        <title>Adicionar Rotuladores</title>
+        <title>Add Taggers</title>
 		
 		<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -49,7 +49,7 @@
 				var ok = $('#taggers option').filter(function() {
 					return this.value == $('#tagger').val();
 				}).data('tg');
-				if(!ok) alert("Nome de usuário incorreto !");
+				if(!ok) alert("User name incorrect!");
 				return ok;
 				
 			};			
@@ -75,7 +75,7 @@
 			//Submit form (taggers)
 			function mySubmit(){
 				if($('input[name^="lpTaggers"]').size() == 0){
-					if(confirm("Tem certeza de que não quer adicionar rotuladores a este processo de rotulação ?")){
+					if(confirm("Are you sure you do not want to add any taggers to this process?")){
 						$(location).attr('href','index.php');
 					}
 				}else{
@@ -92,39 +92,38 @@
 				<nav class="navbar navbar-default">
 					<div class="container">
 						<div class="navbar-header navbar-left">
-							<a class="navbar-brand" href="index.php">Sistema de Apoio à Rotulação Manual de Textos</a>
+							<a class="navbar-brand" href="index.php">RotuLabic</a>
 						</div>
 						<p class="navbar-text">
-							--  Olá, <?php echo htmlentities($_SESSION['username']); ?>!
+							--  Hello, <?php echo htmlentities($_SESSION['username']); ?>!
 						</p>
 						<div id="navbar" class="collapse navbar-collapse navbar-right">
 							<ul class="nav navbar-nav">
-								<li><a href="profile.php">Perfil</a></li>
+								<li><a href="profile.php">Profile</a></li>
 								<?php if (($_SESSION['user_role'] == 'processAdmin')  ){
-										echo 	'<li><a href="helpAdmin.php">Manual do administrador</a></li>
-												<li><a href="help.php">Manual do usuário</a></li>';
+										echo 	'<li><a href="helpAdmin.php">Admin Help</a></li>
+												<li><a href="help.php">User Help</a></li>';
 									}else{
-										echo '<li><a href="help.php">Manual</a></li>';
+										echo '<li><a href="help.php">Help</a></li>';
 									}
 								?>
-								<li><a href="#about">Sobre</a></li>
-								<li><a href="includes/logout.php">Sair</a></li>
+								<li><a href="includes/logout.php">Logout</a></li>
 							</ul>
 						</div><!--/.nav-collapse -->
 					</div>
 				</nav>
 			</header>
 			<div align="center" >
-				<h4 align="center">Selecione os rotuladores do processo de rotulação </h4>
+				<h4 align="center">Select the taggers for this labeling process</h4>
 				<div class="form-group">
 
-					<input list="taggers" name="taggers_list" id="tagger" placeholder=" Escolha um rotulador">
+					<input list="taggers" name="taggers_list" id="tagger" placeholder=" Choose a tagger">
 						<datalist id="taggers">
 							<?php printUsers($mysqli,$lpID); ?>
 						</datalist>
 				</div>
-				<button type="button" class='btn btn-default' id="addTagger" >Adicionar</button>
-				<button type="button" class='btn btn-default' id="submitButton" onClick="mySubmit()" >Concluir</button>
+				<button type="button" class='btn btn-default' id="addTagger" >Add</button>
+				<button type="button" class='btn btn-default' id="submitButton" onClick="mySubmit()" >Finish</button>
 			</div>
 			
 			<div  class="container ">
@@ -133,7 +132,7 @@
 						<form action = "<?php echo esc_url($_SERVER['PHP_SELF']) . $lpIDstr ; ?>" 
 						id="taggersForm"  method="post">
 							<table id="tblTaggers" class="table table-hover table-bordered ">
-								<thead><tr class="active "><th class="text-center" colspan="3">Rotuladores</th></tr></thead>
+								<thead><tr class="active "><th class="text-center" colspan="3">Taggers</th></tr></thead>
 								<tbody><?php printCurrentTaggers($mysqli,$lpID); ?></tbody>
 							</table>
 						</form>
@@ -142,15 +141,15 @@
 			</div>
 		<?php else : ?>
             <p>
-                <span class="error">Você não está autorizado a visualizar esta página.</span> 
-				<a href="index.php">Voltar</a>
+                <span class="error">Access Denied.</span> 
+				<a href="index.php">Return</a>
             </p>
         <?php endif; ?>
 		<footer class="footer">
 			<div class="container">
 				<p class="text-muted">
-					Esta obra de <a xmlns:cc="http://creativecommons.org/ns#" href="http://labic.icmc.usp.br/" property="cc:attributionName" rel="cc:attributionURL">LABIC | ICMC-USP</a> 
-					está licenciado com uma Licença <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Atribuição 4.0 Internacional</a>.				
+					This work is from <a xmlns:cc="http://creativecommons.org/ns#" href="http://labic.icmc.usp.br/" property="cc:attributionName" rel="cc:attributionURL">LABIC | ICMC-USP</a> 
+					and it is licensed by <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Atribuição 4.0 Internacional</a>.				
 					<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Licença Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a>
 				</p>
 			</div>

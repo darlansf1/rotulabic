@@ -9,5 +9,9 @@ define("PORT", "3306");  					// The MySQL database port (default:3306)
 define("CAN_REGISTER", "any");
 define("DEFAULT_ROLE", "member");
  
-define("SECURE", FALSE);    // FOR DEVELOPMENT ONLY!!!!
+define("SECURE", FALSE);
+
+//Translator login information
+define("ACCOUNT_KEY", "HERE GOES YOUR ACCOUNT KEY FOR MICROSOFT TEXT TRANSLATION API");
+define("BING_ACCOUNT_KEY", "HERE GOES YOUR ACCOUNT KEY FOR BING SEARCH API");
 ?>

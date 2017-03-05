@@ -8,7 +8,7 @@ function removeSpecialChars($text) {
 	$text = strtr(
 		$text,
 		array (
-		  'À' => 'A', 'Á' => 'A', 'Â' => 'A', 'Ã' => 'A', 'Ä' => 'A', 'Å' => 'A',
+		  'À' => 'A', 'Á' => 'A', 'Â¬' => '$', 'Â' => 'A', 'Ã' => 'A', 'Ä' => 'A', 'Å' => 'A',
 		  'Æ' => 'A', 'Ç' => 'C', 'È' => 'E', 'É' => 'E', 'Ê' => 'E', 'Ë' => 'E',
 		  'Ì' => 'I', 'Í' => 'I', 'Î' => 'I', 'Ï' => 'I', 'Ð' => 'D', 'Ñ' => 'N',
 		  'Ò' => 'O', 'Ó' => 'O', 'Ô' => 'O', 'Õ' => 'O', 'Ö' => 'O', 'Ø' => 'O',
@@ -18,7 +18,7 @@ function removeSpecialChars($text) {
 		  'ê' => 'e', 'ë' => 'e', 'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i',
 		  'ð' => 'o', 'ñ' => 'n', 'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o',
 		  'ö' => 'o', 'ø' => 'o', 'ù' => 'u', 'ú' => 'u', 'û' => 'u', 'ý' => 'y',
-		  'þ' => 'b', 'ÿ' => 'y', 'ŕ' => 'r'
+		  'þ' => 'b', 'ÿ' => 'y', 'ŕ' => 'r', '&' => 'E'
 		)
 	);   
 	return $text;
@@ -47,7 +47,7 @@ function removeStopWords ($text, $idiom){
 	
 }
 
-function stem ($text, $idiom) {
+function doStem ($text, $idiom) {
 	$text = preg_replace('/[[:punct:]]/', '', $text); //Removing punctuation 
 	if($idiom == "pt")
 		$stemming = new PorterStemmerPT ();
@@ -66,13 +66,12 @@ function stem ($text, $idiom) {
 		}	
 	}
 	
-	
 	return $text;
 }
 
 function preProcess ($text , $idiom) {
 	$text = removeStopWords ($text, $idiom);
-	$text = stem ($text , $idiom);
+	$text = doStem ($text , $idiom);
 	$text = cleanText( $text );
 	return $text;
 }

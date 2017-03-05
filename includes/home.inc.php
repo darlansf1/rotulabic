@@ -102,6 +102,7 @@ function printTaggerTableRow ( $mysqli  , $lpInfo  ){
 	//the number of available documents [not finalized] as the total) 
 	$progress = '';	
 	
+	$lpInfo[1] =($lpInfo[1]);
 	if($status=='concluded'){
 		echo '<td>'. $lpInfo[1].'</td>';
 		$progress =  ' (' . $tot . '/' . $tot .')';
@@ -111,7 +112,7 @@ function printTaggerTableRow ( $mysqli  , $lpInfo  ){
 		echo '<td><a href="guideline.php?lpID=' .$lpID. 
 			'&status=' .$status. '">' .$lpInfo[1].'</a></td>';
 	}
-	echo '<td>'.getPortugueseStatus ($status).$progress.'</td>';
+	echo '<td>'.getEnglishStatus ($status).$progress.'</td>';
 	echo '</tr>';	
 }
 
@@ -125,7 +126,7 @@ function printTaggerTableRow ( $mysqli  , $lpInfo  ){
 */
 function printTaggerTable( $table , $mysqli ) {
 	if ($table->num_rows > 0){
-		echo '<thead><tr><th>ID</th><th>Nome</th><th>Status</th></tr></thead>';
+		echo '<thead><tr><th>ID</th><th>Name</th><th>Status</th></tr></thead>';
 		echo '<tbody>';
 		while($row = mysqli_fetch_row($table)){
 			printTaggerTableRow ($mysqli, $row );
@@ -218,11 +219,12 @@ function printAdminTableRow ( $lpInfo,$mysqli ){
 	$tot = getTotalNumberOfTaggers($mysqli,$lpID);
 	$done = getNumberOfDoneTaggers($mysqli,$lpID);
 	$progress =  ' (' . $done . '/' . $tot .')';
+	$lpInfo[1] =($lpInfo[1]);
 	
 	echo '<tr>';
 	echo '<td>'.$lpID.'</td>';
 	echo '<td><a href="labelingProcessInfo.php?lpID=' .$lpID. '">' .$lpInfo[1]. '</a></td>';
-	echo '<td>'.getPortugueseStatus ($lpInfo[2]).$progress.'</td>';
+	echo '<td>'.getEnglishStatus ($lpInfo[2]).$progress.'</td>';
 	echo '</tr>';	
 }
 
@@ -236,7 +238,7 @@ function printAdminTableRow ( $lpInfo,$mysqli ){
 */
 function printAdminTable( $table,$mysqli ) {
 	if ($table->num_rows > 0){
-		echo '<thead><tr><th>ID</th><th>Nome</th><th>Status</th></tr></thead>';
+		echo '<thead><tr><th>ID</th><th>Name</th><th>Status</th></tr></thead>';
 		echo '<tbody>';
 		while($row = mysqli_fetch_row($table)){
 			printAdminTableRow ( $row,$mysqli );

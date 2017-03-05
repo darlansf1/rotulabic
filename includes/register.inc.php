@@ -3,15 +3,18 @@ include_once 'db_connect.php';
 include_once 'psl-config.php';
 include_once 'functions.php';
 
+sec_session_start();
+
 //Checking if form was submitted  
-if (isset($_POST['username'], $_POST['email'], $_POST['p'])) {
+if (isset($_POST['username'], $_POST['email'], $_POST['p'], $_POST['user_role'])) {
     // Sanitize and validate the data passed in
     $username = filter_input(INPUT_POST, 'username', FILTER_SANITIZE_STRING);
+	$user_role = filter_input(INPUT_POST, 'user_role', FILTER_SANITIZE_STRING);
     $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
     $email = filter_var($email, FILTER_VALIDATE_EMAIL);
     if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
         // Not a valid email
-		setAlert("O email inserido não é válido.\n");
+		setAlert("O email inserido não é válido.");
     }
  
     $password = filter_input(INPUT_POST, 'p', FILTER_SANITIZE_STRING);
@@ -78,13 +81,15 @@ if (isset($_POST['username'], $_POST['email'], $_POST['p'])) {
         $password = hash('sha512', $password . $random_salt);
  
         // Insert the new user into the database 
-        if ($insert_stmt = $mysqli->prepare("INSERT INTO tbl_user (user_name, user_email, user_password, user_salt) VALUES (?, ?, ?, ?)")) {
-            $insert_stmt->bind_param('ssss', $username, $email, $password, $random_salt);
-            // Execute the prepared query.
-            if (! $insert_stmt->execute()) {
-                header('Location: ../error.php?err=Registration failure: INSERT');
-            }
+        $insert_stmt = $mysqli->prepare("INSERT INTO tbl_user (user_name, user_email, user_password, user_salt, user_role) VALUES (?, ?, ?, ?, ?)");
+		phpAlert(""+$insert_stmt);
+        $insert_stmt->bind_param('sssss', $username, $email, $password, $random_salt, $user_role);
+        // Execute the prepared query.
+        if (! $insert_stmt->execute()) {
+			phpAlert($mysqli->error);
+            header('Location: ../error.php?err=Registration failure: INSERT');
         }
+		$insert_stmt->close();
         header('Location: ./index.php?signup=ok');
     }
 }

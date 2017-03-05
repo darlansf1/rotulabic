@@ -38,23 +38,27 @@ if (login_check($mysqli) == true) {
     <body>
         <?php
         if (isset($_GET['error'])) {
-			phpAlert( "Erro ao logar." );
+			phpAlert( "Error logging in." );
         }
 		
         if (!empty( $_GET["signup"] )) {
-			phpAlert( "Cadastro realizado com sucesso." );
+			phpAlert( "You have been successfully signed up." );
         }
         ?>
 		<header>
 		    <nav class="navbar navbar-default">
 				<div class="container">
 					<div class="navbar-header navbar-left">
-						<a class="navbar-brand" href="index.php">Sistema de Apoio à Rotulação Manual de Textos</a>
+						<img src="images/logo.png" alt="LABIC - Laboratório de Inteligência Computacional" height="100" width="187">
+					</div>	
+					<div class="navbar-header navbar-left">
+						<br> <br> <br>
+						<a class="navbar-brand" href="index.php">RotuLabic - Sistema de Apoio à Rotulação Manual de Textos</a>
 					</div>
 					<div id="navbar" class="collapse navbar-collapse navbar-right">
 						<ul class="nav navbar-nav">
-							<li ><a href="#">Sobre</a></li>
-							<li><a href="help.php">Manual</a></li>
+							<br> <br> <br>
+							<li><a href="help.php">Help</a></li>
 						</ul>
 					</div><!--/.nav-collapse -->
 				</div>
@@ -67,22 +71,22 @@ if (login_check($mysqli) == true) {
 				<h2 class="form-signin-heading text-center">RotuLabic Login</h2>
 				
 				<label for="email" class="sr-only">Email</label>
-				<input type="email" id="email" name="email" class="form-control" placeholder="Digite aqui seu email" required autofocus>
+				<input type="email" id="email" name="email" class="form-control" placeholder="Type in your email" required autofocus>
 				
-				<label for="password" class="sr-only">Senha</label>
-				<input type="password"name="password" id="password" class="form-control" placeholder="Digite aqui sua senha" required/>
+				<label for="password" class="sr-only">Password</label>
+				<input type="password"name="password" id="password" class="form-control" placeholder="Type in your password" required/>
 				
 				<button type="button" onclick="formhash(this.form, this.form.password);" class="btn btn-lg btn-primary btn-block">Log in</button> 
 			</form>
 			<form action="register.php" class="form-signin">
-				<button class="btn btn-lg btn-primary btn-block" type="submit">Novo Cadastro</button>
+				<button class="btn btn-lg btn-primary btn-block" type="submit">Sign Up</button>
 			</form>
 		</div>
 		<footer class="footer">
 			<div class="container">
 				<p class="text-muted">
-					Esta obra de <a xmlns:cc="http://creativecommons.org/ns#" href="http://labic.icmc.usp.br/" property="cc:attributionName" rel="cc:attributionURL">LABIC | ICMC-USP</a> 
-					está licenciado com uma Licença <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Atribuição 4.0 Internacional</a>.				
+					This work is from <a xmlns:cc="http://creativecommons.org/ns#" href="http://labic.icmc.usp.br/" property="cc:attributionName" rel="cc:attributionURL">LABIC | ICMC-USP</a> 
+					and it is licensed by <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Atribuição 4.0 Internacional</a>.				
 					<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Licença Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a>
 				</p>
 			</div>

@@ -1,5 +1,6 @@
 <?php
 include_once 'psl-config.php';
+include_once 'lpbhn.php';
  
 function sec_session_start() {
     $session_name = 'sec_session_id';   // Set a custom session name
@@ -115,6 +116,19 @@ function checkbrute($user_id, $mysqli) {
     }
 }
 
+
+function eliminate_short_words($text, $min_length){
+	$result = '';
+	$text = explode(' ', $text);
+	foreach($text as $word){
+		if(strlen($word) >= $min_length){
+			$text = $text.' '.$word;
+		}
+	}
+	return $text;
+}
+
+
 function login_check($mysqli) {
     // Check if all session variables are set 
     if (isset($_SESSION['user_id'], 
@@ -228,6 +242,20 @@ function getPortugueseStatus ($status) {
 	return "Indefinido";
 }
 
+function getEnglishStatus ($status) {
+	switch ($status) {
+		case "concluded" 		:return "Concluded";
+		case "draft" 			:return "Draft";
+		case "in_analysis" 		:return "In Analysis";
+		case "in_progress" 		:return "In Progress";
+		case "waiting" 			:return "Waiting";
+		case "labeled" 			:return "Labeled";
+		case "skipped" 			:return "Skipped";
+		case "finalized" 		:return "Finalized";
+	}
+	return "Undefined";
+}
+
 function getPortugueseIdiom($idiom) {
 	switch ($idiom) {
 		case "pt" 		:return "Português";
@@ -236,14 +264,108 @@ function getPortugueseIdiom($idiom) {
 	return "Indefinido";
 }
 
+function getEnglishIdiom($idiom) {
+	switch ($idiom) {
+		case "pt" 		:return "Portuguese";
+		case "en" 		:return "English";
+		case "es"		:return "Spanish";
+		case "de"		:return "German";
+		case "fr" 		:return "French";
+		case "it" 		:return "Italian";
+		case "bs-Latn" 	:return "Bosnian (Latin)";
+		case "ca" 		:return "Catalan";
+		case "hr" 		:return "Croatian";
+		case "cs" 		:return "Czech";
+		case "da" 		:return "Danish";
+		case "nl" 		:return "Dutch";
+		case "et" 		:return "Estonian";
+		case "fi" 		:return "Finnish";
+		case "ht" 		:return "Haitian Creole";
+		case "hu" 		:return "Hungarian";
+		case "id" 		:return "Indonesian";
+		case "lv"		:return "Latvian";
+		case "lt"		:return "Lithuanian";
+		case "ms" 		:return "Malay";
+		case "mt" 		:return "Maltese";
+		case "no" 		:return "Norwegian";
+		case "pl" 		:return "Polish";
+		case "ro" 		:return "Romanian";
+		case "sr-Latn" 	:return "Serbian (Latin)";
+		case "sk" 		:return "Slovak";
+		case "sv" 		:return "Swedish";
+		case "tr" 		:return "Turkish";
+		case "vi" 		:return "Vietnamese";
+		case "cy" 		:return "Welsh";
+	}
+	return "Undefined";
+}
+
 function getPortugueseAlgorithm($alg) {
 	switch ($alg) {
 		case "mostVoted" 			:return "Mais Votado";
 		case "random" 				:return "Aleatório";
 		case "testMode" 			:return "Modo de teste";
 		case "transductive" 		:return "Transdutivo";
+		case "none"					:return "Nenhum";
+		case "previouslyIdentified" :return "Previamente identificados";
 	}
 	return "Indefinido";
+}
+
+function processWord($text){
+
+	$i = 0;
+	$regex = "/^[0-9.,\\b\\s\\n\\~\\!\\@\\#\\$\\%\\^\\&\\*\\(\\)\\_\\+\\=\\-\\[\\]\\{\\}\\;\\:\\'\\\"\\\\\\/\\<\\>\\?]+$/";
+	while(preg_match($regex, substr($text, $i, 1))){
+		$i++;
+		if($i == strlen($text))
+			break;
+	}
+				
+	$j = strlen($text);
+	
+	while(preg_match($regex, substr($text, $j-1, 1))){
+		$j--;
+		if($j == 0)
+			break;
+	}
+	
+	return substr($text, $i, $j-$i);
+}
+
+function getCurrDocText($mysqli){
+	$docID = $_SESSION['curDocID'];
+	
+	$docText = "";
+	$query = "	SELECT document_text 
+					FROM tbl_document 
+					WHERE document_id = ? LIMIT 1" ;
+	$stmt = $mysqli->prepare($query);
+	$stmt->bind_param('i',$docID);
+	if($stmt->execute()){
+		$stmt->bind_result($docText);
+		$stmt->fetch();
+		$docText = strtoupper((utf8_decode(stripslashes($docText))));
+	}else{
+		dbError($mysqli);
+	}
+	
+	$stmt->close();
+	return $docText;
+}
+
+function getEnglishAlgorithm($alg) {
+	switch ($alg) {
+		case "mostVoted" 			:return "Most Voted";
+		case "random" 				:return "Random";
+		case "testMode" 			:return "Test Mode";
+		case "transductive" 		:return "Transductive";
+		case "none"					:return "None";
+		case "frequenceBased"		:return "Frequence-based";
+		case "lexiconBased"			:return "Lexicon-based";
+		case "PMIBased"				:return "PMI-based";
+	}
+	return "Undefined";
 }
 
 /**
@@ -265,6 +387,7 @@ function unsetLabelingProcessData(){
 	unset($_SESSION['minDocID']);
 	unset($_SESSION['maxDocID']);
 	unset($_SESSION['lblOptionRank']);
+	unset($_SESSION['cur_lpLabelingType']);
 }
 
 ?>

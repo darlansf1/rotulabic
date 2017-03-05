@@ -5,7 +5,7 @@
 		<meta charset="utf-8">
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<title>Alterar Senha</title>
+		<title>Change Password</title>
 		
          <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -27,23 +27,22 @@
 				<nav class="navbar navbar-default">
 					<div class="container">
 						<div class="navbar-header navbar-left">
-							<a class="navbar-brand" href="index.php">Sistema de Apoio à Rotulação Manual de Textos</a>
+							<a class="navbar-brand" href="index.php">RotuLabic</a>
 						</div>
 						<p class="navbar-text">
-							--  Olá, <?php echo htmlentities($_SESSION['username']); ?>!
+							--  Hello <?php echo htmlentities($_SESSION['username']); ?>!
 						</p>
 						<div id="navbar" class="collapse navbar-collapse navbar-right">
 							<ul class="nav navbar-nav">
-								<li><a href="profile.php">Perfil</a></li>
+								<li><a href="profile.php">Profile</a></li>
 								<?php if (($_SESSION['user_role'] == 'processAdmin')  ){
-										echo 	'<li><a href="helpAdmin.php">Manual do administrador</a></li>
-												<li><a href="help.php">Manual do usuário</a></li>';
+										echo 	'<li><a href="helpAdmin.php">Admin Help</a></li>
+												<li><a href="help.php">User Help</a></li>';
 									}else{
-										echo '<li><a href="help.php">Manual</a></li>';
+										echo '<li><a href="help.php">Help</a></li>';
 									}
 								?>
-								<li><a href="#about">Sobre</a></li>
-								<li><a href="includes/logout.php">Sair</a></li>
+								<li><a href="includes/logout.php">Logout</a></li>
 							</ul>
 						</div><!--/.nav-collapse -->
 					</div>
@@ -57,11 +56,11 @@
 					<fieldset>
 					
 						<div id="legend">
-							<legend >Alterar Senha</legend>
+							<legend >Change Password</legend>
 						</div>
 						
 						<div class="form-group">
-							<label for="username" class="col-sm-2 control-label">Usuário</label>
+							<label for="username" class="col-sm-2 control-label">User name</label>
 							<div class="col-sm-5">
 								<input type="text" id="username" name="username" class="form-control" readonly value = "<?php echo $user_name; ?>"/> 
 							</div>
@@ -75,16 +74,16 @@
 						</div>
 						
 						<div class="form-group">
-							<label for="password" class="col-sm-2 control-label">Senha</label>
+							<label for="password" class="col-sm-2 control-label">Password</label>
 							<div class="col-sm-5">
-								<input type="password"name="password" id="password" class="form-control" placeholder="Senha" required/>
+								<input type="password"name="password" id="password" class="form-control" placeholder="Password" required/>
 							</div>
 						</div>
 					
 						<div class="form-group">
-							<label for="confirmpwd" class="col-sm-2 control-label">Confirmar Senha</label>
+							<label for="confirmpwd" class="col-sm-2 control-label">Confirm Password</label>
 							<div class="col-sm-5">
-								<input type="password"name="confirmpwd" id="confirmpwd" class="form-control" placeholder="Confirmar senha" required/>
+								<input type="password"name="confirmpwd" id="confirmpwd" class="form-control" placeholder="Password" required/>
 							</div>
 						</div>
 							
@@ -95,7 +94,7 @@
 														   this.form.username,
 														   this.form.email,
 														   this.form.password,
-														   this.form.confirmpwd);" > Confirmar
+														   this.form.confirmpwd);" > Confirm Change
 								</button>
 							</div>
 						</div>

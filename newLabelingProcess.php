@@ -7,7 +7,7 @@
 		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 		<meta name="author" content="Rafael Paravia">
-		<title>Criar Processo de Rotulação</title>
+		<title>Create Labeling Process</title>
 		
          <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
 		<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
@@ -32,7 +32,7 @@
 						}
 					});
 					if(append)appendLabel();
-					else alert("Rótulo duplicado !");
+					else alert("Duplicate label!");
 				});
 				
 				//If the type of labelling process is 'preset', then
@@ -108,27 +108,28 @@
 			};
 			function validadeForm(){
 				var lpType = $('input:radio[name=lpType]:checked').val();
+				
 				if(	($("#lpName").val()=="") || 
 					( ($("#lpSuggestionAcceptanceRate").val()=="") && lpType === "postSet" )){
-					alert("Todos os campos devem ser preenchidos");
+					alert("You must fill in all the fields");
 					return false;
 				}
 				
 				//Checking if the instruction file was sent
 				if(($("#lpInstructions").val()=="")){
-					alert("Você deve selecionar o guia para este processo de rotulação\n(arquivo em formato .txt)")
+					alert("You must upload the instructions for the taggers\n(Use a .txt file)")
 					return false;
 				}
 				
-				//Checking if the documents(to be labelled) were sent
+				//Checking if the documents(to be labeled) were sent
 				if(($("#lpDocs").val()=="")){
-					alert("Você deve selecionar pelo menos um documento a ser rotulado")
+					alert("You must upload at least one document")
 					return false;
 				}
 				
 				//Checking if there are at least two files in case the labelling process is 'preSet'
 				if( (lpType === "preSet") && ($('input[name^="lpLabels"]').size() < 2) ){
-					alert("Deve haver pelo menos duas opções de rótulos caso estes sejam fixados");
+					alert("There should be at least two labels when you are not accepting label suggestions.");
 					return false;
 				}
 				//If everything is all right, then we submit the form 
@@ -145,30 +146,29 @@
 				<nav class="navbar navbar-default">
 					<div class="container">
 						<div class="navbar-header navbar-left">
-							<a class="navbar-brand" href="index.php">Sistema de Apoio à Rotulação Manual de Textos</a>
+							<a class="navbar-brand" href="index.php">RotuLabic</a>
 						</div>
 						<p class="navbar-text">
-							--  Olá, <?php echo htmlentities($_SESSION['username']); ?>!
+							--  Hello, <?php echo htmlentities($_SESSION['username']); ?>!
 						</p>
 						<div id="navbar" class="collapse navbar-collapse navbar-right">
 							<ul class="nav navbar-nav">
-								<li><a href="profile.php">Perfil</a></li>
+								<li><a href="profile.php">Profile</a></li>
 								<?php if (($_SESSION['user_role'] == 'processAdmin')  ){
-										echo 	'<li><a href="helpAdmin.php">Manual do administrador</a></li>
-												<li><a href="help.php">Manual do usuário</a></li>';
+										echo 	'<li><a href="helpAdmin.php">Admin Help</a></li>
+												<li><a href="help.php">User Help</a></li>';
 									}else{
-										echo '<li><a href="help.php">Manual</a></li>';
+										echo '<li><a href="help.php">Help</a></li>';
 									}
 								?>
-								<li><a href="#about">Sobre</a></li>
-								<li><a href="includes/logout.php">Sair</a></li>
+								<li><a href="includes/logout.php">Logout</a></li>
 							</ul>
 						</div><!--/.nav-collapse -->
 					</div>
 				</nav>
 			</header>
 			
-			<h1 align="center">Criar Novo Processo de Rotulação</h1>
+			<h1 align="center">Create new labeling process</h1>
 			<div class="container" style= "border:1px solid #ddd;padding-top:30px;">
 				<form 	action = "<?php echo esc_url($_SERVER['PHP_SELF']); ?>" 
 						id="newLPForm" 
@@ -178,7 +178,7 @@
 						class = "form-horizontal "> 
 						
 						<div class="form-group">
-							<label for="lpName" class="col-sm-6 control-label">Nome do Processo de Rotulação</label>
+							<label for="lpName" class="col-sm-6 control-label">Process Name</label>
 							<div class="col-sm-3">
 								<input required type="text" name="lpName" id="lpName" class="form-control input-sm">
 							</div>
@@ -186,8 +186,8 @@
 						
 						<div class="form-group">
 							<label for="lpInstructions" class="col-sm-6 control-label">
-								<abbr title="Apenas formato .txt">
-									Anexar instruções para os rotuladores
+								<abbr title=".txt only">
+									Upload labeling instructions
 								</abbr>						
 							</label>
 							<div class="col-sm-2">
@@ -197,8 +197,8 @@
 
 						<div class="form-group">
 							<label for="lpDocs" class="col-sm-6 control-label">
-								<abbr title="Apenas formato .txt">
-									Anexar documentos a serem rotulados
+								<abbr title=".txt only">
+									Upload documents to be labeled
 								</abbr>						
 							</label>
 							<div class="col-sm-2">
@@ -208,28 +208,28 @@
 						
 						<div class="form-group">
 							<label for="lpMultiLabel" class="col-sm-6 control-label">
-								Multirótulo
+								Multi-Label
 							</label>
 							<div class="col-sm-2">
 								<label class="radio-inline">
-									<input type="radio" checked="checked" name="lpMultiLabel" id="multiLabel" value="true"> Sim
+									<input type="radio" checked="checked" name="lpMultiLabel" id="multiLabel" value="true"> Yes
 								</label>
 								<label class="radio-inline">
-									<input type="radio" name="lpMultiLabel" id="monoLabel" value="false"> Não
+									<input type="radio" name="lpMultiLabel" id="monoLabel" value="false"> No
 								</label>
 							</div>
 						</div>		
 					
 						<div class="form-group">
 							<label for="lpType" class="col-sm-6 control-label">
-								Tipo de rótulos
+								Label settings
 							</label>
 							<div class="col-sm-3">
 								<label class="radio-inline">
-									<input type="radio" checked="checked" name="lpType" id="preSet" value="preSet"> Fixados
+									<input type="radio" checked="checked" name="lpType" id="preSet" value="preSet"> Fixed
 								</label>
 								<label class="radio-inline">
-									<input type="radio" name="lpType" id="postSet" value="postSet">Permitir Sugestões
+									<input type="radio" name="lpType" id="postSet" value="postSet">Allow suggestions
 								</label>
 								
 							</div>
@@ -237,8 +237,8 @@
 						
 						<div class="form-group" id="sugAccRateRow" style="display:none;">
 							<label for="lpSuggestionAcceptanceRate" class="col-sm-6 control-label">
-								<abbr title="Número mínimo de rotuladores em concordância para que a sugestão de rótulo seja aceita pelo processo de rotulação">
-									Taxa mínima para aceitar rótulos (sugestões)
+								<abbr title="Minimum number of taggers agreeing to a suggested label for it to be accepted in the labeling process">
+									Min label suggestion acceptance rate
 								</abbr>						
 							</label>
 							<div class="col-sm-2">
@@ -249,8 +249,8 @@
 						
 						<div class="form-group">
 							<label for="lpLabelAcceptanceRate" class="col-sm-6 control-label">
-								<abbr title="Número mínimo de rotuladores em concordância para que um documento deixe de ser apresentado">
-									Taxa mínima de concordância de rótulos (documentos)
+								<abbr title="Minimum number of taggers agreeing to a document labeling for it to be considered finished">
+									Min document agreement rate
 								</abbr>						
 							</label>
 							<div class="col-sm-3">
@@ -259,47 +259,49 @@
 							</div>
 						</div>
 						
+						<input type='hidden' id='labelingType' name='labelingType' value='normal'>
+						
 						<div class="form-group">
 							<label for="txtLabel" class="col-sm-6 control-label">
-								Adicionar opções de rótulos
+								Add label options
 							</label>
 							<div class="col-sm-3">
 								<table id="tblLabelList">
 									<tr>
 										<td><input id="txtLabel" type="text" name="txtLabel" class="form-control input-sm"></td>
-										<td style="padding-left:10px;"><button id="btnAddLabel" type="button" class="btn btn-default btn-sm" > Adicionar</button></td>
+										<td style="padding-left:10px;"><button id="btnAddLabel" type="button" class="btn btn-default btn-sm" > Add</button></td>
 									</tr>
 								</table>
 							</div>
 						</div>					
 						
 						<div class="form-group">
-							<label for="lpSuggestionAlgorithm" class="col-sm-6 control-label">Algoritmo para sugestão de rótulos</label>
+							<label for="lpSuggestionAlgorithm" class="col-sm-6 control-label">Label suggestion algorithm</label>
 							<div class="col-sm-3">
 								<select name="lpSuggestionAlgorithm" id="lpSuggestionAlgorithm" class="form-control input-sm">
-								  <option value="mostVoted">Sugerir o mais votado</option>
-								  <option value="random">Sugestão aleatória</option>
-								  <option value="transductive">Classificação transdutiva</option>
-								  <option value="testMode">Modo de teste</option>
+								  <option value="mostVoted">Most voted</option>
+								  <option value="random">Random</option>
+								  <option value="transductive">Transductive Classification</option>
+								  <option value="testMode">Test mode</option>
 								</select>
 							</div>
 						</div>	
 						
 						<div class="form-group" id="idiomRow" style="display:none;">
-							<label for="lpIdiom" class="col-sm-6 control-label">Idioma dos documentos</label>
+							<label for="lpIdiom" class="col-sm-6 control-label">Language of the documents</label>
 							<div class="col-sm-2">
 								<select name="lpIdiom" id="lpIdiom" class="form-control input-sm">
-								  <option id='optionPT' selected value="pt">Português</option>
-								  <option value="en">Inglês</option>
-								  <option id='optionUN' value="un" hidden>Indefinido</option>
+								  <option id='optionPT' selected value="pt">Portuguese</option>
+								  <option value="en">English</option>
+								  <option id='optionUN' value="un" hidden>Undefined</option>
 								</select>
 							</div>
 						</div>  
 						
 						<div class="form-group" id="resetRateRow" style="display:none;">
 							<label for="lpTransductiveResetRate" class="col-sm-6 control-label">
-								<abbr title="A cada quantos documentos rotulados o passo 'reset' do algoritmo deve ser realizado">
-									Taxa para reset (algoritmo transdutivo)
+								<abbr title="Number of documents to be labeled before the 'reset' step of the algorithm takes place">
+									Reset rate (transductive algorithm)
 								</abbr>						
 							</label>
 							<div class="col-sm-2" >
@@ -313,20 +315,20 @@
 			<div align="center" >
 					<button type="button" 
 					class="btn btn-default" style="margin:20px;"
-					id="submitButton" onClick="validadeForm()" >Criar</button>
+					id="submitButton" onClick="validadeForm()" >Create</button>
 			</div>
 			
 		<?php else : ?>
             <p>
-                <span class="error">Você não está autorizado a visualizar esta página.</span> 
-				<a href="index.php">Voltar</a>
+                <span class="error">Access Denied.</span> 
+				<a href="index.php">Return</a>
             </p>
         <?php endif; ?>
 		<footer class="footer">
 			<div class="container">
 				<p class="text-muted">
-					Esta obra de <a xmlns:cc="http://creativecommons.org/ns#" href="http://labic.icmc.usp.br/" property="cc:attributionName" rel="cc:attributionURL">LABIC | ICMC-USP</a> 
-					está licenciado com uma Licença <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Atribuição 4.0 Internacional</a>.				
+					This work is from <a xmlns:cc="http://creativecommons.org/ns#" href="http://labic.icmc.usp.br/" property="cc:attributionName" rel="cc:attributionURL">LABIC | ICMC-USP</a> 
+					and it is licensed by <a rel="license" href="http://creativecommons.org/licenses/by/4.0/">Creative Commons Atribuição 4.0 Internacional</a>.				
 					<a rel="license" href="http://creativecommons.org/licenses/by/4.0/"><img alt="Licença Creative Commons" style="border-width:0" src="https://i.creativecommons.org/l/by/4.0/80x15.png" /></a>
 				</p>
 			</div>

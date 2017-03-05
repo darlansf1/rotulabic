@@ -23,6 +23,7 @@ function unsetData(){
 	unset($_SESSION['minDocID']);
 	unset($_SESSION['maxDocID']);
 	unset($_SESSION['lblOptionRank']);
+	unset($_SESSION['cur_lpLabelingType']);
 }
 
 function getPostSetData($mysqli,$lpID){
@@ -73,7 +74,7 @@ function getInstructions($mysqli,$lpID) {
 	$_SESSION['cur_lpMinFinalAccRate'] = $lpMultilabel  = 0;
 	
 	$query = "SELECT process_name, process_instructions, process_label_acceptance_rate, 
-				process_multilabel, process_type, process_suggestion_algorithm
+				process_multilabel, process_type, process_suggestion_algorithm, process_labeling_type
 				FROM tbl_labeling_process 
 				WHERE process_id = ? LIMIT 1" ;
 				
@@ -85,16 +86,18 @@ function getInstructions($mysqli,$lpID) {
 							$_SESSION['cur_lpMinFinalAccRate'],
 							$lpMultilabel,
 							$_SESSION['cur_lpType'],
-							$_SESSION['cur_lpAlgorithm']);
+							$_SESSION['cur_lpAlgorithm'],
+							$_SESSION['cur_lpLabelingType']);
 		$stmt->fetch();
+		$_SESSION['cur_lpName'] =($_SESSION['cur_lpName']);
 	}else{
 		setAlert("Erro ao recuperar dados do banco de dados");
 	}
 	$stmt->close();
 	
 	if (isAlertEmpty()) {
-		echo '<h3 align="center">Instruções para o processo de rotulação: ' . $_SESSION['cur_lpName'] . '</h3>';
-		echo '<div align="center"><textarea readonly rows="18" cols="100" >'.$lpInst.'</textarea></div>';
+		echo '<h3 align="center">Instructions for the process: ' . $_SESSION['cur_lpName'] . '</h3>';
+		echo '<div align="center"><textarea readonly rows="18" cols="100" >'.utf8_decode($lpInst).'</textarea></div>';
 		
 		$_SESSION['cur_lpMultilabel'] 		= $lpMultilabel == 1 ? true : false;
 		
@@ -150,7 +153,10 @@ if ( isset($_GET['lpID'])){
 	$nextPage = $_POST["btnChangePage"];
 	if($nextPage == 'next'){
 		//Initializes labeling process
-		header('Location: ./labeling.php');
+		if($_SESSION['cur_lpLabelingType'] == 'normal')
+			header('Location: ./labeling.php');
+		else
+			header('Location: ./ABLabeling.php');
 	}else{
 		//Navigation button was clicked
 		unsetData();

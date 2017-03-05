@@ -1,7 +1,7 @@
 <?php
 include_once 'db_connect.php';
 include_once 'functions.php';
-include_once 'lpbhn.php';
+include_once 'lpbhn.php'; 
 
 sec_session_start();
 
@@ -15,7 +15,8 @@ sec_session_start();
 function dbError($mysqli) {
 	$mysqli->rollback();
 	$mysqli->autocommit(TRUE);
-	setAlert("Houve um erro durante o processo de rotulação, que teve que ser encerrado.");
+	echo mysqli_error($mysqli);
+	setAlert("Fatal error when trying to retrieve information");
 	header('Location: ./index.php');
 	exit();
 }
@@ -42,12 +43,11 @@ function showProgressBar(){
 							" aria-valuemin='" . $_SESSION['minDocID'] . "' " . 
 							" aria-valuemax='" . $_SESSION['maxDocID'] . "' " . 
 							" style='width:" .$progress. "%'>".
-								$progress. "% completado". 
+								$progress. "% complete". 
 						'</div>'.
 					'</div>'.
 				'</div>'.
 			'</div>';
-
 	}	
 }
 
@@ -66,7 +66,7 @@ function showSuggestedLabel($sugLabel){
 		
 		echo 
 		'<tr>
-			<td><strong>Rótulo Sugerido pelo Sistema :</strong></td>
+			<td><strong>System\'s suggestion :</strong></td>
 			<td><input type='. $inputType .' checked name="lpLabels[]" value="' . $sugLabel . '">&ensp;' . $sugLabel . '</td><br>
 		</tr>';
 		
@@ -84,7 +84,7 @@ function showOtherLabels($labels){
 	if(!empty($labels)){
 		
 		if($_SESSION['cur_lpAlgorithm'] == 'testMode') echo '<tr><td>Opções de Rótulo :</td><td>';
-		else echo '<tr><td><strong>Demais Rótulos :</strong></td><td>';
+		else echo '<tr><td><strong>Other label options :</strong></td><td>';
 		
 		$inputType = "radio";					//Radio Button for single label
 		if($_SESSION['cur_lpMultilabel']) $inputType = "checkbox";		//Checkboxes for multilabel
@@ -94,6 +94,204 @@ function showOtherLabels($labels){
 		}
 		echo '</td></tr>';
 	}
+}
+
+function getAspects($mysqli){
+	$prev_aspects = array();
+
+    $query = "	SELECT aspect_tagger, aspect_doc, aspect_lp, aspect_type, aspect_aspect, aspect_polarity, aspect_start, aspect_end, aspect_number 
+					FROM tbl_aspect 
+					WHERE aspect_doc = ? AND aspect_tagger = ?"; 
+	$stmt = $mysqli->prepare($query);
+	$stmt->bind_param('ii',$_SESSION['curDocID'],$_SESSION['user_id']);
+	if($stmt->execute()){
+		$result = $stmt->get_result();
+		while($data = mysqli_fetch_row($result)){
+			array_push($prev_aspects, $data);
+		}
+	}else{
+		setAlert("Error retrieving information");
+	}
+	$stmt->close();
+	
+	return $prev_aspects;
+}
+
+/**
+* Gets the items in the given position for each aspect in the document and print them as a list
+*
+* @param  ($mysqli) - mysqli object (MYSQL database connection) 
+* @param  ($index) - the position of the item according to the table's structure
+*/
+function getAspectItems($mysqli, $index){
+	$str = "[";
+
+	$prev_aspects = getAspects($mysqli);
+	$count = count($prev_aspects);
+	for($i = 0; $i < $count; $i++){
+		$item = $prev_aspects[$i][$index];//get only the needed part
+		
+		if($index == 3 || $index == 4 || $index == 5)//these are strings
+			$item = "\"".$item."\"";
+			
+		$str = $str.$item;
+		if($i < $count-1)
+			$str = $str.", ";
+	}
+	
+	echo $str."]";
+}
+
+function getSIs($mysqli){
+	$prev_SIs = array();
+	$prev_aspects = getAspects($mysqli);
+	
+    $query = "	SELECT si_term, si_real_text, si_start, si_end, si_aspect_number 
+					FROM tbl_sentiment_indication
+					WHERE si_aspect_number = ?"; 
+	$stmt = $mysqli->prepare($query);
+	
+	$count = count($prev_aspects);
+	for($i = 0; $i < $count; $i++){
+		$stmt->bind_param('i',$prev_aspects[$i][8]);
+		if($stmt->execute()){
+			$result = $stmt->get_result();
+			while($data = mysqli_fetch_row($result)){
+				array_push($prev_SIs, $data);
+			}
+		}else{
+			setAlert("Error retrieving information");
+		}
+	
+	
+	}
+	$stmt->close();
+	return $prev_SIs;
+}
+
+/**
+* Gets the number of sentiment indications of each aspect and print them as a list
+*
+* @param  ($mysqli) - mysqli object (MYSQL database connection) 
+*/
+function getNumberOfSIs($mysqli){
+	$str = "[";
+	
+	$prev_SIs = getSIs($mysqli);
+	$prev_aspects = getAspects($mysqli);
+	
+	$count = count($prev_aspects);
+	$siCount = count($prev_SIs);
+	$offset = 0;
+	
+	for($i = 0; $i < $count; $i++){
+		$j = 0;
+		
+		while($j+$offset < $siCount && $prev_SIs[$j+$offset][4] == $prev_aspects[$i][8]){
+			$j++;
+		}
+		$offset = $j+$offset;
+		$str = $str.$j;
+		
+		if($i < $count-1)
+			$str = $str.", ";
+	}
+	
+	echo $str."]";
+}
+
+/**
+* Gets the items in the given position for each sentiment indication in the document and print them as a list
+*
+* @param  ($mysqli) - mysqli object (MYSQL database connection) 
+* @param  ($index) - the position of the item according to the table's structure
+*/
+function getSIItems($mysqli, $index){
+	$str = "[";
+
+	$prev_SIs = getSIs($mysqli);
+	$count = count($prev_SIs);
+	for($i = 0; $i < $count; $i++){
+		$item = $prev_SIs[$i][$index];//get only the needed part
+		if($index == 0 || $index == 1)//these are strings
+			$item = "\"".$item."\"";
+		
+		$str = $str.$item;
+		if($i < $count-1)
+			$str = $str.", ";
+	}
+	
+	echo $str."]";
+}
+
+/**
+* This function gets all labels and print them as a list
+*
+* @param  ($mysqli) - mysqli object (MYSQL database connection) 
+*/
+function getLabels($mysqli){
+	$str = "[";
+	
+	$labels = getLabelOptions($mysqli);
+	$i = 0;
+	$count = count($labels)-1;
+	foreach($labels as $label){
+		$label = strtoupper($label);
+		if($i != $count)
+			$str = $str."'".$label."'".",";
+		else
+			$str = $str."'".$label."']";
+		$i++;
+	}
+	
+	echo $str;
+}
+
+/**
+* This function gets the colors of the label options
+*
+* @param  ($mysqli) - mysqli object (MYSQL database connection) 
+*/
+function getLabelColors($mysqli){
+	$colors = array(); //each label's color
+    $query = "	SELECT lpLabelOpt_color 
+					FROM tbl_labeling_process_label_option 
+					WHERE lpLabelOpt_lp = ?"; 
+	$stmt = $mysqli->prepare($query);
+	$stmt->bind_param('i',$_SESSION['cur_lpID'] );
+	if($stmt->execute()){
+		$result = $stmt->get_result();
+		while($data = mysqli_fetch_row($result)){
+			array_push($colors, $data[0]);
+		}
+	}else{
+		setAlert("Error retrieving information");
+	}
+	$stmt->close();
+	return $colors;
+}
+
+/**
+* This function gets the color of each label and print them all as a list
+*
+* @param  ($mysqli) - mysqli object (MYSQL database connection) 
+*/
+function getColors($mysqli){
+	$str = "[";
+	
+	$colors = getLabelColors($mysqli);
+	
+	$i = 0;
+	$count = count($colors)-1;
+	foreach($colors as $color){
+		if($i != $count)
+			$str = $str."'".$color."'".",";
+		else
+			$str = $str."'".$color."']";
+		$i++;
+	}
+	
+	echo $str;
 }
 
 /**
@@ -164,6 +362,7 @@ function insertSuggestion($mysqli,$algorithm,$suggestion){
 	
 	if(!$stmt->execute()){
 		$stmt->close();
+		
 		dbError($mysqli);
 	}						
 	$stmt->close();
@@ -208,6 +407,19 @@ function showLabels($mysqli) {
 	else if($_SESSION['cur_lpAlgorithm'] == 'testMode')		testModeSuggestion($mysqli);
 }
 
+function showColoredLabels($mysqli){
+	$labels = getLabelOptions($mysqli);
+	$colors = getLabelColors($mysqli);
+
+	for($i = 0; $i < count($labels); $i++){
+		echo "<option style='background-color:".$colors[$i]."' value=\"".$colors[$i]."\">".$labels[$i]."</option>\n";
+	}
+
+	#<option style='background-color:green' value="green"><a href="#">Positivo</a></option>
+	#<option style='background-color:red' value="red"><a href="#">Negativo</a></option>
+	#<option style='background-color:yellow' value="yellow"><a href="#">Neutro</a></option>
+}
+
 /**
 * If the process allows the user to suggest a label, then this input
 * is inserted in the form	
@@ -217,12 +429,12 @@ function showInputOfSuggestions() {
 		//If it is allowed to make label suggestion, then we add this input to the form
 		echo
 		'<tr>
-			<td>Sugerir Novo Rótulo :</td>
+			<td>Suggest a new label :</td>
 			<td>
 				<table id="tblLabelList">
 					<tr>
 						<td><input  id="txtLabel"    type="text" name="txtLabel" ></td>
-						<td><button id="btnAddLabel" type="button" >Adicionar</button></td>
+						<td><button id="btnAddLabel" type="button" >Add</button></td>
 					</tr>
 				</table>
 			</td>
@@ -241,11 +453,11 @@ function showButtonNext () {
 		&& !empty($_SESSION['maxDocID']) 
 		&& $_SESSION['curDocID'] == $_SESSION['maxDocID'] ) {
 			//Last document
-			echo "<input type='button' class='btn btn-default' onclick=\"validateForm('next')\" value='Finalizar'>";
-			phpAlert("Último documento a ser rotulado !");
+			echo "<input type='button' class='btn btn-default' onclick=\"validateForm('next')\" value='Finish'>";
+			phpAlert("Last document to be labeled!");
 			return true;
 		}
-	echo "<input type='button' class='btn btn-default' onclick=\"validateForm('next')\" value='Próximo Documento'>";
+	echo "<input type='button' class='btn btn-default' onclick=\"validateForm('next')\" value='Next Document'>";
 	return false;
 }
 
@@ -268,6 +480,7 @@ function unsetData(){
 	unset($_SESSION['minDocID']);
 	unset($_SESSION['maxDocID']);
 	unset($_SESSION['lblOptionRank']);
+	unset($_SESSION['cur_lpLabelingType']);
 }
 
 /**
@@ -287,10 +500,11 @@ function getLabelOptions($mysqli){
 	if($stmt->execute()){
 		$result = $stmt->get_result();
 		while($data = mysqli_fetch_row($result)){
+			$data[0] =($data[0]);
 			array_push($labels, $data[0]);
 		}
 	}else{
-		setAlert("Erro ao recuperar as opções de rótulos deste processo");
+		setAlert("Error retrieving information");
 	}
 	$stmt->close();
 	return $labels;
@@ -314,10 +528,11 @@ function getRankedLabels($mysqli){
 	if($stmt->execute()){
 		$result = $stmt->get_result();
 		while($data = mysqli_fetch_row($result)){
+			$data[0] =($data[0]);
 			array_push($rankedLabels, $data[0]);
 		}
 	}else{
-		setAlert("Erro ao recuperar as os rótulos deste processo");
+		setAlert("Error retrieving information");
 	}
 	$stmt->close();
 	return $rankedLabels;
@@ -343,6 +558,7 @@ function jumpDocument($mysqli){
 	$stmt->bind_param('ii',$_SESSION['curDocID'],$_SESSION['user_id']);
 	if(!$stmt->execute()){
 		$stmt->close();
+		
 		dbError($mysqli);
 		return;
 	}
@@ -371,6 +587,7 @@ function removeVotes($mysqli){
 	$stmt->bind_param('ii',$_SESSION['curDocID'],$_SESSION['user_id']);
 	if(!$stmt->execute()){
 		$stmt->close();
+		
 		dbError($mysqli);
 		return;
 	}
@@ -388,6 +605,7 @@ function addVotes($mysqli){
 	if(isset($_SESSION['lblOptionRank'] )) {
 		//Adding the labels marked on checkboxes to the created array
 		foreach ($_SESSION['lblOptionRank'] as $lblOption){
+			$lblOption =($lblOption);
 			if(isChecked('lpLabels',$lblOption)){
 				array_push($chosenLabels,$lblOption);
 			}
@@ -406,8 +624,10 @@ function addVotes($mysqli){
 	$stmt->bind_param('is',$_SESSION['curDocID'],$lblOption);
 	
 	foreach ($chosenLabels as $lblOption){
+		$lblOption =($lblOption);
 		if(!$stmt->execute()){
 			$stmt->close();
+			
 			dbError($mysqli);
 			return;					
 		}		
@@ -432,8 +652,10 @@ function addTransductiveVotes($mysqli,$chosenLabels){
 	$stmt->bind_param('is',$_SESSION['curDocID'],$chosenLabel);
 	
 	foreach ($chosenLabels as $chosenLabel){
+		$chosenLabel =($chosenLabel);
 		if(!$stmt->execute()){
 			$stmt->close();
+			
 			dbError($mysqli);
 			return;					
 		}		
@@ -457,6 +679,7 @@ function deleteChosenLabels($mysqli){
 	$stmt->bind_param('ii',$_SESSION['curDocID'],$_SESSION['user_id']);
 	if(!$stmt->execute()){
 		$stmt->close();
+		
 		dbError($mysqli);
 		return;
 	}
@@ -473,10 +696,12 @@ function insertLabelSuggestion($mysqli){
 	if(isset($_POST['lpSugLabels'] )){
 		$query = "REPLACE INTO tbl_label VALUES(?)";
 		$stmt = $mysqli->prepare($query);
-		$stmt->bind_param('s',$lbl);
+		$stmt->bind_param('s', $lbl);
 		foreach ($_POST['lpSugLabels'] as $lbl){
+			$lbl =($lbl);
 			if(!$stmt->execute()){
 				$stmt->close();
+				
 				dbError($mysqli);
 				return;								
 			}		
@@ -504,18 +729,23 @@ function acceptSuggestions($mysqli){
 	$stmt = $mysqli->prepare($query);
 	$stmt->bind_param('ii',$_SESSION['cur_lpID'],$_SESSION['cur_lpMinAccRate']);
 	
-	$secondQuery = "INSERT INTO tbl_labeling_process_label_option VALUES (?, ?);";
+	$secondQuery = "INSERT INTO tbl_labeling_process_label_option(lpLabelOpt_lp, lpLabelOpt_label) VALUES (?, ?);";
 	$secondStmt  = $mysqli->prepare($secondQuery);
-	$secondStmt->bind_param('is',$_SESSION['cur_lpID'],$data[0]);
+	
+	//phpAlert("lpId: ".$_SESSION['cur_lpID']);
+	$secondStmt->bind_param('is',$_SESSION['cur_lpID'], $labeldata);
 	
 	if($stmt->execute()){
 		$result = $stmt->get_result();
 		if ($result->num_rows > 0){	
 			while($data = mysqli_fetch_row($result)){
+				$labeldata =($data[0]);
+				phpAlert($labeldata);
 				//Inserting the labels that were accepted into database
 				if(!$secondStmt->execute()){
 					$stmt->close();
-					$secondStmt->close();	
+					$secondStmt->close();
+					//phpAlert("Here: ".$mysqli->error);					
 					dbError($mysqli);
 					return;					
 				}
@@ -524,6 +754,7 @@ function acceptSuggestions($mysqli){
 	}else{
 		$stmt->close();
 		$secondStmt->close();	
+		
 		dbError($mysqli);
 		return;
 	}
@@ -562,7 +793,8 @@ function insertLabelsSuggestedByTagger($mysqli){
 					VALUES(?,?,?,-1)";		//Rank -1 for suggested labels
 		$stmt = $mysqli->prepare($query);
 		$stmt->bind_param('iis',$_SESSION['curDocID'],$_SESSION['user_id'],$lbl);
-		foreach ($_POST['lpSugLabels'] as $lbl){	
+		foreach ($_POST['lpSugLabels'] as $lbl){
+			$lbl =($lbl);
 			if(!$stmt->execute()){
 				$stmt->close();
 				dbError($mysqli);
@@ -589,6 +821,7 @@ function insertChosenLabels($mysqli){
 		$stmt = $mysqli->prepare($query);
 		$stmt->bind_param('iisi',$_SESSION['curDocID'],$_SESSION['user_id'],$lblOption,$count);
 		foreach ($_SESSION['lblOptionRank'] as $lblOption){
+			$lblOption =($lblOption);
 			if(isChecked('lpLabels',$lblOption)){
 				$chosenLabels[] = $lblOption;
 				if(!$stmt->execute()){
@@ -754,6 +987,40 @@ function concludeLP($mysqli){
 	$secondStmt->close();
 }
 
+function isHiddenAspectEnabled($mysqli){
+	$ret = 0;
+	$query = "SELECT process_hidden_aspect  
+					FROM tbl_labeling_process
+					WHERE process_id = ?" ;
+	$stmt = $mysqli->prepare($query);
+	$stmt->bind_param('i',$_SESSION['cur_lpID']);
+	if($stmt->execute()){
+		$stmt->bind_result($ret);
+		$stmt->fetch();
+		$stmt->close();
+	}else{
+		$stmt->close();
+	}
+	return $ret;
+}
+
+function isGeneralAspectEnabled($mysqli){
+	$ret = 0;
+	$query = "SELECT process_generic_aspect  
+					FROM tbl_labeling_process
+					WHERE process_id = ?" ;
+	$stmt = $mysqli->prepare($query);
+	$stmt->bind_param('i',$_SESSION['cur_lpID']);
+	if($stmt->execute()){
+		$stmt->bind_result($ret);
+		$stmt->fetch();
+		$stmt->close();
+	}else{
+		$stmt->close();
+	}
+	return $ret;
+}
+
 /**
 * Each document has an ID, which is created in a sequential manner (3,4,5...)
 * Then, each labeling process has n documents and each one of this
@@ -827,12 +1094,15 @@ function getDocumentInfo ($mysqli) {
 		$stmt->bind_result($docName,$docText);
 		$stmt->fetch();
 		$stmt->close();
+		$docName = utf8_decode($docName);
+		$docText = utf8_decode($docText);
 	}else{
 		$stmt->close();
 		dbError($mysqli);
 		return;
 	}
 	$docName = substr ($docName,0,-4); //Removing ".txt"
+
 	return array ($docName, $docText);
 	
 }
@@ -895,6 +1165,171 @@ function isCurrentDocumentFinalized ($mysqli) {
 	}
 }
 
+function saveAnnotations($mysqli){
+	if(!empty($_POST["numberOfRows"]) && $_POST["numberOfRows"] > 0){
+		$numRows = $_POST["numberOfRows"];
+		$numOfSIs = $_POST["numberOfSIs"];
+		$aspects = $_POST['aspect_aspect'];
+		$types = $_POST['aspect_type'];
+		$polarities = $_POST['aspect_polarity'];
+		$starts = $_POST['aspect_start'];
+		$ends = $_POST['aspect_end'];
+		$SIs; $SI_starts; $SI_ends; $SI_real_texts;
+		if(!empty($_POST['SIs'])){
+			$SIs = $_POST['SIs'];
+			$SI_starts = $_POST['SI_starts'];
+			$SI_ends = $_POST['SI_ends'];
+			$SI_real_texts = $_POST['SI_real_texts'];
+		}
+		
+		$curSI = 0;
+		$aspect_type;
+		
+		$ids = [];
+		
+		//Get all aspect IDs associated to the current document, tagger and proccess
+		$select_query1 = "SELECT aspect_number 
+								FROM tbl_aspect 
+								WHERE aspect_lp = ?
+								AND aspect_tagger = ?
+								AND aspect_doc = ?"; 
+								
+		$select_stmt1 = $mysqli->prepare($select_query1);
+		$select_stmt1->bind_param('iii',$_SESSION['cur_lpID'], $_SESSION['user_id'], $_SESSION['curDocID']);
+		if($select_stmt1->execute()){
+			$result = $select_stmt1->get_result();
+			while($data = mysqli_fetch_row($result)){
+				array_push($ids, $data[0]);
+			}
+		}else{
+			setAlert("Error retrieving information");
+		}
+		$select_stmt1->close();
+		
+		foreach($ids as $id){
+			//Deleting aspect entry, for the case when the user returned to a annotated document
+			$delete_query = "DELETE FROM tbl_aspect
+								WHERE aspect_number = ?"; 
+								
+			$delete_stmt = $mysqli->prepare($delete_query);
+			$delete_stmt->bind_param('i',$id);
+				
+			if(!$delete_stmt->execute()){
+				phpAlert("".$mysqli->error);
+				$delete_stmt->close();
+				dbError($mysqli);
+				return;	
+			}
+			$delete_stmt->close();
+			
+			//Deleting sentiment indications for the document
+			$delete_query = "DELETE FROM tbl_sentiment_indication
+								WHERE si_aspect_number = ?"; 
+								
+			$delete_stmt = $mysqli->prepare($delete_query);
+			$delete_stmt->bind_param('i', $id);
+				
+			if(!$delete_stmt->execute()){
+				phpAlert("".$mysqli->error);
+				$delete_stmt->close();
+				dbError($mysqli);
+				return;	
+			}
+			$delete_stmt->close();
+		}
+		
+		for($i = 0; $i < $numRows; $i++){
+			
+			$aspect = $aspects[$i];
+			if($types[$i] == 1){
+				$aspect = "HIDDEN";
+				$aspect_type = "hidden";
+			}else if($types[$i] == 2){
+				$aspect = "GENERIC";
+				$aspect_type = "generic";
+			}else{
+				$aspect_type = "normal";
+			}
+			
+			//Saving primary aspect data
+			$insert_query1 = "INSERT INTO tbl_aspect (aspect_lp, aspect_type, aspect_aspect, aspect_polarity, 
+												aspect_start, aspect_end, aspect_tagger, aspect_doc) 
+											VALUES (?, ?, ?, ?, ?, ?, ?, ?);";
+											
+			$insert_stmt1 = $mysqli->prepare($insert_query1);
+			
+			$aspect =($aspect); $polarities[$i] =($polarities[$i]);
+			$insert_stmt1->bind_param('isssiiii', $_SESSION['cur_lpID'], $aspect_type, $aspect, 
+								$polarities[$i], $starts[$i], $ends[$i], $_SESSION['user_id'], $_SESSION['curDocID']);
+				
+			if(!$insert_stmt1->execute()){
+				phpAlert("".$mysqli->error);
+				$insert_stmt1->close();
+				dbError($mysqli);
+				return;	
+			}
+			$insert_stmt1->close();
+			
+			$aspect_number;
+			
+			//Retrieving the number assigned to the aspect
+			$select_query = "SELECT aspect_number 
+								FROM tbl_aspect 
+								WHERE aspect_lp = ?
+								AND aspect_tagger = ?
+								AND aspect_aspect = ?
+								AND aspect_start = ?
+								AND aspect_doc = ?"; 
+								
+			$select_stmt = $mysqli->prepare($select_query);
+			$select_stmt->bind_param('iisii',$_SESSION['cur_lpID'], $_SESSION['user_id'], $aspect, $starts[$i], $_SESSION['curDocID']);
+			if($select_stmt->execute()){
+				$result = $select_stmt->get_result();
+				$data = mysqli_fetch_row($result);
+				$aspect_number = $data[0];
+			}else{
+				setAlert("Error retrieving information");
+			}
+			$select_stmt->close();
+			
+			for($j = 0; $j < $numOfSIs[$i]; $j++){
+				//Saving sentiment indication data
+				$insert_query2 = "INSERT INTO tbl_sentiment_indication (si_term, si_real_text, si_start, si_end, si_aspect_number) 
+												VALUES (?, ?, ?, ?, ?);";
+				$insert_stmt2 = $mysqli->prepare($insert_query2);
+				$SIs[$curSI] =($SIs[$curSI]);
+				
+				$insert_stmt2->bind_param('ssiii', $SIs[$curSI], $SI_real_texts[$curSI], $SI_starts[$curSI], $SI_ends[$curSI], $aspect_number);
+									
+				if(!$insert_stmt2->execute()){
+					phpAlert("".$mysqli->error);
+					$insert_stmt2->close();
+					dbError($mysqli);
+					return;	
+				}
+				$insert_stmt2->close();
+				
+				$curSI++;
+			}
+		}
+	
+		
+		//Updating document labeling status --> labeled
+		$query = "	UPDATE tbl_document_labeling 
+						SET labeling_status = 'labeled', labeling_date = CURRENT_TIME() 
+						WHERE labeling_document = ? 
+							AND labeling_tagger = ?;";
+		$stmt = $mysqli->prepare($query);
+		$stmt->bind_param('ii',$_SESSION['curDocID'],$_SESSION['user_id']);
+		if(!$stmt->execute()){
+			$stmt->close();
+			dbError($mysqli);
+			return;	
+		}
+		$stmt->close();
+	}
+}
+
 //Rollback point
 $mysqli->autocommit(FALSE);$mysqli->commit();
 
@@ -930,8 +1365,13 @@ if(	(!empty($_POST["btnSubmit"]))
 		if($btnSubmit === 'jump'){		//'Jumping' button was clicked
 			jumpDocument($mysqli);
 		}else{							//'Next' button was clicked
-			insertLabels($mysqli);
-			finalizeDocument($mysqli);
+			if(!isset($_SESSION['cur_lpLabelingType']) || $_SESSION['cur_lpLabelingType'] == 'normal'){
+				insertLabels($mysqli);
+				finalizeDocument($mysqli);
+			}else{
+				saveAnnotations($mysqli);
+				//finalizeDocument
+			}
 		}
 		
 		if( $_SESSION['curDocID'] >= $_SESSION['maxDocID']){
