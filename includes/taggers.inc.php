@@ -29,10 +29,25 @@ function printUsers($mysqli,$lpID) {
 			echo '<option value="' .$user.'" data-tg="'.$user.'">' ;
 		}
 	}else{
-		setAlert("Erro ao recuperar usuários do banco de dados");
+		setAlert("Failed to retrieve users data");
 	}
 	$stmt->close();
 }
+
+function ProcessName($mysqli,$lpID) {
+	$query = "SELECT process_name FROM tbl_labeling_process WHERE process_id = ?";
+	$stmt = $mysqli->prepare($query);
+	$stmt->bind_param('i',$lpID );
+	if($stmt->execute()){
+		$result = $stmt->get_result();
+		return mysqli_fetch_row($result)[0];
+	}else{
+		setAlert("Failed to retrieve process name.");
+		return 'UNKNOWN';
+	}
+	$stmt->close();	
+}
+
 
 /**
 * Connects to database and retrieves the users that are
@@ -56,7 +71,7 @@ function printCurrentTaggers($mysqli,$lpID) {
 			echo 	'<tr class="info" ><td colspan="3" >'.$tg.'</td></tr>';
 		}
 	}else{
-		setAlert("Erro ao recuperar usuários do banco de dados");
+		setAlert("Failed to retrieve taggers data");
 	}
 	$stmt->close();
 }
@@ -81,7 +96,7 @@ function getDocuments ($mysqli , $lpID) {
 		}
 	}else {
 		$mysqli->rollback();
-		setAlert("Erro ao recuperar documentos do banco de dados");	
+		setAlert("Failed to retrieve documents");	
 	}
 	$stmt->close();
 	return $docs;
@@ -128,7 +143,7 @@ function insertTaggers ($mysqli, $docs, $lpID){
 				return;
 			}
 		}else{
-			setAlert("Erro ao recuperar id do usuário " .$tg);
+			setAlert("Failed to retrieve id of the user " .$tg);
 			$mysqli->rollback();
 			$stmt1->close();$stmt2->close();$stmt3->close();
 			return;			
@@ -136,7 +151,7 @@ function insertTaggers ($mysqli, $docs, $lpID){
 			
 		foreach ($docs as $docID){
 			if(!$stmt3->execute()){
-				setAlert("Erro ao inserir rotulador " .$tg. " no banco de dados");
+				setAlert("Failed to insert tagger " .$tg. " in the database");
 				$mysqli->rollback();
 				$stmt1->close();$stmt2->close();$stmt3->close();
 				return;
@@ -161,7 +176,7 @@ function updateLPStatus ($mysqli, $lpID){
 	$stmt->bind_param('i',$lpID );
 	if(!$stmt->execute()){
 		$mysqli->rollback();
-		setAlert("Erro ao atualizar o status do processo de rotulação");			
+		setAlert("Failed to update labeling process status");			
 	}
 	$stmt->close();
 }

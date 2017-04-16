@@ -114,7 +114,7 @@
 				</nav>
 			</header>
 			<div align="center" >
-				<h4 align="center">Select the taggers for this labeling process</h4>
+				<h4 align="center">Select the taggers labeling process "<?php echo processName($mysqli, $lpID);?>"</h4>
 				<div class="form-group">
 
 					<input list="taggers" name="taggers_list" id="tagger" placeholder=" Choose a tagger">

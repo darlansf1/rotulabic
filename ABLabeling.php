@@ -39,6 +39,7 @@
 				terms: <?php getSIItems($mysqli, 0); ?>,
 				starts: <?php getSIItems($mysqli, 2) ?>
 			};
+			var showSkipMessage = <?php echo (isset($_SESSION['showSkipMessage'])? $_SESSION['showSkipMessage']: 'true');?>;
 			
 			$(document).ready(function(){
 				
@@ -253,13 +254,15 @@
 			
 			function validateForm(btnSubmit){
 				var submit = true;
-				if(btnSubmit==='jump'){
-					if(!confirm("This document will be left unlabeled, unless it has been previously annoted.")){
+				if(btnSubmit==='jump' && showSkipMessage){
+					if(!confirm("This document will be left unlabeled, unless it has been previously annoted. If left unlabeled, it will be counted as a no-aspect document. This message won't appear again, but you can always return to the previous documents if you ever change your mind about one you have skipped.")){
 						submit = false;
 					}
+					<?php $_SESSION['showSkipMessage'] = 'false'; ?>;
+					showSkipMessage = false;
 				}else if(btnSubmit==='next'){
 					if(	($('#aspect_table').get(0).rows.length <= 1)){
-						alert("You must label at least one aspect, or skip the document");
+						alert("You must label at least one aspect, or skip the document to set it as a no-aspect document.");
 						submit = false;
 					}else{
 						globalSubmit = true;
@@ -450,7 +453,6 @@
 				var annotedText = $('#faketextarea').html();
 				annotedText = decodeText(annotedText);
 				var txt = processSelection(selection, getOccurrenceNumber(selection.toString(), getBeginning()));
-				
 				selection = window.getSelection();
 				var occur = getOccurrenceNumber(txt, getBeginning());
 				var originalBeginning = getBeginning();
@@ -673,7 +675,7 @@
 				removeAllHighlights();
 				restoreHighlights();
 			}
-
+			
 				$(function() {
 				  $("#polarities_dd").on("click",(function(){addRow(0);}));
 				});
@@ -873,7 +875,7 @@
 				}
 				
 				function decodeText(text){
-					var elem =document.createElement('textarea');
+					var elem = document.createElement('textarea');
 					elem.innerHTML = text;
 					return elem.value;
 				}
@@ -885,8 +887,7 @@
 					var startIndex = 0;
 					var index, count = 0;
 					while((index = text.indexOf(str, startIndex)) > -1){
-						//alert('found at index: '+index);
-						//alert('beginning: '+beginning);
+						//alert('found at index: '+index+', beginning: '+beginning+', text: '+text);
 						if(index == beginning){
 							return count;
 						}

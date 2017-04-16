@@ -93,7 +93,7 @@ function getTotalNumberOfDocuments($mysqli,$lpID) {
 function printTaggerTableRow ( $mysqli  , $lpInfo  ){
 	$lpID = $lpInfo[0];
 	$status = getLPStatus($mysqli,$lpID);
-	echo '<tr>';
+	echo "<tr id='taggerRow$lpID'>";
 	echo '<td>'.$lpID.'</td>';
 	
 	$tot = getTotalNumberOfDocuments($mysqli,$lpID);
@@ -221,10 +221,11 @@ function printAdminTableRow ( $lpInfo,$mysqli ){
 	$progress =  ' (' . $done . '/' . $tot .')';
 	$lpInfo[1] =($lpInfo[1]);
 	
-	echo '<tr>';
+	echo "<tr id='row$lpID'>";
 	echo '<td>'.$lpID.'</td>';
 	echo '<td><a href="labelingProcessInfo.php?lpID=' .$lpID. '">' .$lpInfo[1]. '</a></td>';
 	echo '<td>'.getEnglishStatus ($lpInfo[2]).$progress.'</td>';
+	echo "<td><input type='button' style='width: 100%; height: 100%' id='removeLPButton' onclick='removeLP($lpID)' value='x'></input></td>";
 	echo '</tr>';	
 }
 
@@ -270,4 +271,20 @@ function getAdminLPs($mysqli) {
 		setAlert("Erro ao recuperar os processos de rotulação do banco de dados!");
 	}
 	$stmt->close();
+}
+
+if (isset($_POST['idToRemove'])) {
+	$id = $_POST['idToRemove'];
+	
+	$query = "DELETE FROM tbl_labeling_process WHERE process_id = ?";
+	$stmt = $mysqli->prepare($query);
+	$stmt->bind_param('i', $id);
+		
+	if(!$stmt->execute()){
+		echo "Failed to remove process with ID $id. "+$mysqli->error;
+		$stmt->close();
+	}
+	
+	$stmt->close();
+	echo "Process with ID $id removed successfully.";
 }

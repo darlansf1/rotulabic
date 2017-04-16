@@ -132,188 +132,6 @@ function secondDownload($mysqli){
 
 }
 
-function getAnnotationsPerDoc($mysqli, $include_sentiment_words){
-	$documents = array();
-	$query = "";
-
-	$info = "";
-	
-	$word = array(); $start = array(); $polarity = array(); $document = array(); $type = array(); $id = array();
-	
-	$query = "SELECT aspect_aspect, aspect_start, aspect_polarity, aspect_doc, aspect_type, aspect_number
-					FROM tbl_aspect 
-					WHERE aspect_lp = ? ORDER BY aspect_doc"; 
-	$stmt = $mysqli->prepare($query);
-	$stmt->bind_param('i',$_POST['lpID'] );
-	
-	if($stmt->execute()){
-		$result = $stmt->get_result();
-		while($data = mysqli_fetch_row($result)){
-			array_push($word, $data[0]);
-			array_push($start, $data[1]);
-			array_push($polarity, $data[2]);
-			array_push($document, $data[3]);
-			array_push($type, $data[4]);
-			array_push($id, $data[5]);
-		}
-	}else{
-		setAlert("Erro ao acessar banco de dados");
-	}
-	$stmt->close();
-	
-	//Grouping by document
-	$docAspects = array(); $docStarts = array(); $docPolarities = array(); $docIds = array(); $k = -1; $docAspectIds = array(); $docTypes = array();
-	for($i = 0; $i < count($word); $i++){
-		if($i == 0 || ($i != 0 && $document[$i-1] != $document[$i])){
-			array_push($docAspects, array());
-			array_push($docStarts, array());
-			array_push($docPolarities, array());
-			array_push($docAspectIds, array());
-			array_push($docIds, $document[$i]);
-			array_push($docTypes, array());
-			
-			$k++;
-		}
-		
-		//if($type[$i] == "normal")
-		array_push($docAspects[$k], $word[$i]);
-		//else
-			//array_push($docAspects[$k], $type[$i]);
-		array_push($docAspectIds[$k], $id[$i]);
-		array_push($docStarts[$k], $start[$i]);
-		array_push($docPolarities[$k], $polarity[$i]);
-		array_push($docTypes[$k], $type[$i]);
-	}
-	
-	//arrays used to keep track of the aspects with the min agreement rate per doc
-	$agreedCountPol = array();
-	
-	//counts docs that have all aspects with the min agreement rate
-	$agreedDocPol = 0;
-	
-	$agreementRate = 0;
-	$minAgreementRate = $_POST['agreementRate'];
-	$aspectsPerDoc = array();
-	$docName;
-	
-	for($i = 0; $i < count($docIds); $i++){
-
-		$query = "SELECT document_name 
-					FROM tbl_document
-					WHERE document_id = ?"; 
-		$stmt = $mysqli->prepare($query);
-		$stmt->bind_param('i',$docIds[$i] );
-		
-		if($stmt->execute()){
-			$stmt->bind_result($docName);
-			$stmt->fetch();
-			$docName =utf8_decode($docName);
-		}else{
-			setAlert("Erro ao recuperar dados do banco de dados");
-		}
-		$stmt->close();
-	
-		$agreedPol = 0;
-		array_push($documents, array());
-		array_push($documents[$i], $docName);
-		array_push($documents[$i], "");
-		
-		//arrays to keep track of the verified aspects
-		$countedPol = array();
-		array_push($agreedCountPol, 0);
-		array_push($aspectsPerDoc, 0);
-		$sentimentWords = array();
-		
-		for($j = 0; $j < count($docAspects[$i]); $j++){
-			$k = $j;
-			
-			$currentWord; $currentStart; 
-			$beginning = $k;
-			
-			while(count($countedPol) > $k && $countedPol[$k] == 1)
-				$k++;
-			
-			$currentPolarity;
-			$beginning = $k;
-			
-			//counting agreement considering polarity
-			while($k < count($docAspects[$i])){			
-				if(count($countedPol) > $k && $countedPol[$k] == 1){
-					$k++;
-					continue;
-				}
-				if($k == $beginning){
-					$currentWord = $docAspects[$i][$k];
-					$currentStart = $docStarts[$i][$k];
-					$currentPolarity = $docPolarities[$i][$k];
-					$currentType = $docTypes[$i][$k];
-					$agreementRate = 0;
-				}
-				
-				if(count($countedPol) == $k)
-					array_push($countedPol, 0);
-				if($docAspects[$i][$k] == $currentWord && $docStarts[$i][$k] == $currentStart 
-														&& $docPolarities[$i][$k] == $currentPolarity){
-					$agreementRate++;
-					$countedPol[$k] = 1;
-					if($include_sentiment_words == 1){
-						$query = "SELECT *
-										FROM tbl_sentiment_indication 
-										WHERE si_aspect_number = ?"; 
-						$stmt = $mysqli->prepare($query);
-						$stmt->bind_param('i',$docAspectIds[$i][$k]);
-						
-						if($stmt->execute()){
-							$result = $stmt->get_result();
-							while($data = mysqli_fetch_row($result)){
-								$l = 0;
-								for(;$l < count($sentimentWords); $l++){
-									if($data[0] == $sentimentWords[$l][0] && $data[2] == $sentimentWords[$l][2])
-										break;
-								} 
-								if($l == count($sentimentWords))
-									array_push($sentimentWords, $data);
-							}
-						}else{
-							setAlert("Erro ao acessar banco de dados");
-						}
-						$stmt->close();
-					}
-				}
-					
-				$k++;
-				if($k == count($docAspects[$i]) && $agreementRate >= $minAgreementRate){
-					$currentWord =($currentWord);
-					$currentPolarity =($currentPolarity);
-					$currentEnd = $currentStart+strlen($currentWord);
-					if($currentType != 'normal')
-						$currentEnd = $currentStart;
-					
-					$documents[$i][1] = $documents[$i][1]."\r\n\t<aspectTerm term=\"".$currentWord."\" polarity=\"".$currentPolarity."\" from=\"".$currentStart."\" to=\"".$currentEnd."\"/>";
-					if($include_sentiment_words == 1){
-						for($l = 0; $l < count($sentimentWords); $l++){
-							$sentimentTerm =($sentimentWords[$l][0]);
-							$sentimentStart = $sentimentWords[$l][2];
-							$sentimentEnd = $sentimentWords[$l][3];
-							$documents[$i][1] = $documents[$i][1]."\r\n\t<sentimentTerm term=\"".$sentimentTerm."\" from=\"".$sentimentStart."\" to=\"".$sentimentEnd."\"/>";
-						}
-					}
-					$agreedCountPol[$i]++;
-				}
-			}
-		}
-
-		if($agreedCountPol[$i] == $aspectsPerDoc[$i])
-			$agreedDocPol++;
-		
-		//phpAlert($documents[$i][1]);
-		$documents[$i][1] = "<aspectTerms>".$documents[$i][1]."\r\n</aspectTerms>";
-		//phpAlert("aspects per doc (".$i."): ".$aspectsPerDoc[$i]);
-	}
-				
-	return $documents;
-}
-
 function getAnnotationsPerDocSpecial($mysqli, $include_sentiment_words){
 	$documents = array();
 	$query = "";
@@ -500,6 +318,7 @@ function getAnnotationsPerDocSpecial($mysqli, $include_sentiment_words){
 					$currentPolarity = $docPolarities[$i][$k];
 					$currentType = $docTypes[$i][$k];
 					$agreementRate = 0;
+					$sentimentWords = array();
 				}
 				
 				if(count($countedPol) == $k)
@@ -532,10 +351,9 @@ function getAnnotationsPerDocSpecial($mysqli, $include_sentiment_words){
 						$stmt->close();
 					}
 				}
-					
+			    
 				$k++;
 				if($k == count($docAspects[$i]) && $agreementRate >= $minAgreementRate){
-					$currentWord =($currentWord);
 					$currentPolarity =($currentPolarity);
 					$currentEnd = $currentStart+strlen($currentWord);
 					if($currentType != 'normal')
@@ -586,7 +404,7 @@ function downloadWithSentiment($mysqli){
 		return;
     }
     
-	$docs = getAnnotationsPerDoc($mysqli, 1);
+	$docs = getAnnotationsPerDocSpecial($mysqli, 1);
 	
     foreach($docs as $doc) {
 		//Adding text files(labeled documents) to zip archive

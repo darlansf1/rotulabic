@@ -345,7 +345,11 @@
 							<div class="col-sm-3">
 								<select name="lpSuggestionAlgorithm" id="lpSuggestionAlgorithm" class="form-control input-sm">
 								  <option value="none">No suggestions</option>
-								  <option value="PMIBased">PMI-Based</option>
+								  <!--Microsoft's search API has become too restrictive 
+								  for free tier users. We're commenting this portion of the code
+								  util we find a suitable alternative, but nothing keeps you
+								  from uncommenting it and using it as you like
+								  <option value="PMIBased">PMI-Based</option>-->
 								  <option value="lexiconBased">Lexicon-Based</option>
 								  <!--<option value="random">Sugestão aleatória</option>
 								  <option value="transductive">Classificação transdutiva</option>
